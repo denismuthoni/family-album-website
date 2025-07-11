@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Family timeline</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <input type="checkbox" id="theme-toggle" hidden>
+  <label for="theme-toggle" class="theme-switch">🌗 Toggle Theme</label>
+
+  <nav>
+    <a href="/">Home</a>
+    <a href="/memories">Memories</a>
+    <a href="/stories">Stories</a>
+    <a href="/timeline">timeline</a>
+  </nav>
+
+  <main class="fade-in">
+    <h2>📅 Family Timeline</h2>
+
+    <div class="timeline">
+      {% for entry in stories %}
+      <div class="timeline-entry">
+        <h4>{{ entry.date }} — {{ entry.name }}</h4>
+        <p>{{ entry.story }}</p>
+        {% if entry.image %}
+          <img src="{{ url_for('static', filename='images/' + entry.image) }}" alt="{{ entry.name }}" style="max-width: 300px; margin-top: 10px; border-radius: 10px;">
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stories</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+    }
+
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .photo-card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease;
+      max-width: 320px;
+      flex: 1 1 calc(33% - 40px);
+    }
+
+    .photo-card:hover {
+      transform: scale(1.02);
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+
+    .caption {
+      padding: 15px;
+      font-size: 0.95rem;
+      text-align: center;
+      color: #444;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+
+    .lightbox img {
+      max-width: 92vw;
+      max-height: 90vh;
+      border-radius: 12px;
+    }
+
+    .lightbox:target {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lightbox .close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 40px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 2rem;
+      color: #333;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #333;
+      padding: 12px;
+      gap: 20px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .theme-switch {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Theme Toggle -->
+  <input type="checkbox" id="theme-toggle" hidden>
+  <label for="theme-toggle" class="theme-switch">🌗 Toggle Theme</label>
+
+  <!-- Navigation -->
+  <nav>
+    <a href="/">Home</a>
+    <a href="/memories">Memories</a>
+    <a href="/stories">Stories</a>
+    <a href="timeline.html">Timeline</a>
+  </nav>
+
+  <main>
+    <h2>Family Stories</h2>
+
+    <div class="gallery">
+
+      <!-- Photo 1 -->
+      <div class="photo-card">
+        <a href="#story1"><img src="{{ url_for('static', filename='images/family1.jpg') }}" alt="Story 1"></a>
+        <div class="caption">Shags selfie, 2023</div>
+      </div>
+
+      <!-- Photo 2 -->
+      <div class="photo-card">
+        <a href="#story2"><img src="{{ url_for('static', filename='images/family2.jpg') }}" alt="Story 2"></a>
+        <div class="caption">Nakuru graduation photo session</div>
+      </div>
+
+      <!-- Photo 3 -->
+      <div class="photo-card">
+        <a href="#story3"><img src="{{ url_for('static', filename='images/family3.jpg') }}" alt="Story 3"></a>
+        <div class="caption">Campus friends who felt like family</div>
+      </div>
+
+      <!-- Photo 4 -->
+      <div class="photo-card">
+        <a href="#story4"><img src="{{ url_for('static', filename='images/family4.jpg') }}" alt="Story 4"></a>
+        <div class="caption">Muranga trip — comrades & mbuzi!</div>
+      </div>
+
+      <!-- Photo 5 -->
+      <div class="photo-card">
+        <a href="#story5"><img src="{{ url_for('static', filename='images/family5.jpg') }}" alt="Story 5"></a>
+        <div class="caption">Another memory from the walk</div>
+      </div>
+
+      <!-- Photo 6 -->
+      <div class="photo-card">
+        <a href="#story6"><img src="{{ url_for('static', filename='images/family6.jpg') }}" alt="Story 6"></a>
+        <div class="caption">Final Muranga trip snapshot</div>
+      </div>
+
+    </div>
+
+    <!-- Lightbox Overlays -->
+    <div id="story1" class="lightbox">
+      <a href="#" class="close">&times;</a>
+      <img src="{{ url_for('static', filename='images/family1.jpg') }}" alt="Story Full 1">
+    </div>
+    <div id="story2" class="lightbox">
+      <a href="#" class="close">&times;</a>
+      <img src="{{ url_for('static', filename='images/family2.jpg') }}" alt="Story Full 2">
+    </div>
+    <div id="story3" class="lightbox">
+      <a href="#" class="close">&times;</a>
+      <img src="{{ url_for('static', filename='images/family3.jpg') }}" alt="Story Full 3">
+    </div>
+    <div id="story4" class="lightbox">
+      <a href="#" class="close">&times;</a>
+      <img src="{{ url_for('static', filename='images/family4.jpg') }}" alt="Story Full 4">
+    </div>
+    <div id="story5" class="lightbox">
+      <a href="#" class="close">&times;</a>
+      <img src="{{ url_for('static', filename='images/family5.jpg') }}" alt="Story Full 5">
+    </div>
+    <div id="story6" class="lightbox">
+      <a href="#" class="close">&times;</a>
+      <img src="{{ url_for('static', filename='images/family6.jpg') }}" alt="Story Full 6">
+    </div>
+
+  </main>
+</body>
+</html>
