@@ -1,188 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Memories</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Memories</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f0f0f0;
-      margin: 0;
-    }
-
-    .gallery {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 24px;
-      justify-content: center;
-      padding: 40px 20px;
-    }
-
-    .photo-card {
-      background: #fff;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease;
-      max-width: 320px;
-      flex: 1 1 calc(33% - 40px);
-    }
-
-    .photo-card:hover {
-      transform: scale(1.02);
-    }
-
-    .photo-card img {
-      width: 100%;
-      height: 220px;
-      object-fit: cover;
-      cursor: pointer;
-    }
-
-    .caption {
-      padding: 15px;
-      font-size: 0.95rem;
-      text-align: center;
-      color: #444;
-    }
-
-    /* Lightbox */
-    .lightbox {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 1000;
-    }
-
-    .lightbox img {
-      max-width: 92vw;
-      max-height: 90vh;
-      border-radius: 12px;
-    }
-
-    .lightbox:target {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .lightbox .close {
-      position: absolute;
-      top: 20px;
-      right: 30px;
-      font-size: 40px;
-      text-decoration: none;
-      color: #fff;
-      font-weight: bold;
-    }
-
-    h2 {
-      text-align: center;
-      margin-top: 30px;
-      font-size: 2rem;
-      color: #333;
-    }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      background-color: #333;
-      padding: 12px;
-      gap: 20px;
-    }
-
-    nav a {
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .theme-switch {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-    }
-  </style>
 </head>
 <body>
 
-  <!-- Theme Toggle -->
-  <input type="checkbox" id="theme-toggle" hidden>
-  <label for="theme-toggle" class="theme-switch">🌗 Toggle Theme</label>
+<nav>
+  <a href="/">Home</a>
+  <a href="/memories">Memories</a>
+  <a href="/stories">Stories</a>
+  <a href="/timeline">Timeline</a>
+</nav>
 
-  <!-- Navigation -->
-  <nav>
-    <a href="/">Home</a>
-    <a href="/memories">Memories</a>
-    <a href="/stories">Stories</a>
-    <a href="timeline.html">Timeline</a>
-  </nav>
+<main class="fade-in">
+  <h2>Family Memories</h2>
 
-  <main>
-    <h2>Family Memories</h2>
+  <!-- Upload Form -->
+  <form action="{{ url_for('memories_page') }}" method="POST"
+        enctype="multipart/form-data" style="text-align:center; margin:20px;">
+    <input type="file" name="photo" accept="image/*" required>
+    <input type="text" name="caption" placeholder="Write a caption..." required>
+    <button type="submit">Add Memory</button>
+  </form>
 
-    <div class="gallery">
+  <div class="gallery">
+    {% for memory in memories %}
       <div class="photo-card">
-        <a href="#memory1"><img src="{{ url_for('static', filename='images/family1.jpg') }}" alt="Memory 1"></a>
-        <div class="caption">Shags selfie, ready for church – 2023</div>
-      </div>
-      <div class="photo-card">
-        <a href="#memory2"><img src="{{ url_for('static', filename='images/family2.jpg') }}" alt="Memory 2"></a>
-        <div class="caption">Nakuru adventure – Chella’s graduation</div>
-      </div>
-      <div class="photo-card">
-        <a href="#memory3"><img src="{{ url_for('static', filename='images/family3.jpg') }}" alt="Memory 3"></a>
-        <div class="caption">Campus friends – my second family</div>
-      </div>
-      <div class="photo-card">
-        <a href="#memory4"><img src="{{ url_for('static', filename='images/family4.jpg') }}" alt="Memory 4"></a>
-        <div class="caption">Murang'a trip – Mbuzi & Nyeni as comrades!</div>
-      </div>
-      <div class="photo-card">
-        <a href="#memory5"><img src="{{ url_for('static', filename='images/family5.jpg') }}" alt="Memory 5"></a>
-        <div class="caption">More joy from Murang'a walk</div>
-      </div>
-      <div class="photo-card">
-        <a href="#memory6"><img src="{{ url_for('static', filename='images/family6.jpg') }}" alt="Memory 6"></a>
-        <div class="caption">Last snapshot from our Murang'a day</div>
-      </div>
-    </div>
+        <a href="#memory{{ loop.index }}">
+          <img src="{{ url_for('static', filename='images/' ~ memory.file) }}">
+        </a>
+        <div class="photo-caption">{{ memory.caption }}</div>
 
-    <!-- Lightbox Overlays -->
-    <div id="memory1" class="lightbox">
-      <a href="#" class="close">&times;</a>
-      <img src="{{ url_for('static', filename='images/family1.jpg') }}" alt="Memory 1 Zoom">
-    </div>
-    <div id="memory2" class="lightbox">
-      <a href="#" class="close">&times;</a>
-      <img src="{{ url_for('static', filename='images/family2.jpg') }}" alt="Memory 2 Zoom">
-    </div>
-    <div id="memory3" class="lightbox">
-      <a href="#" class="close">&times;</a>
-      <img src="{{ url_for('static', filename='images/family3.jpg') }}" alt="Memory 3 Zoom">
-    </div>
-    <div id="memory4" class="lightbox">
-      <a href="#" class="close">&times;</a>
-      <img src="{{ url_for('static', filename='images/family4.jpg') }}" alt="Memory 4 Zoom">
-    </div>
-    <div id="memory5" class="lightbox">
-      <a href="#" class="close">&times;</a>
-      <img src="{{ url_for('static', filename='images/family5.jpg') }}" alt="Memory 5 Zoom">
-    </div>
-    <div id="memory6" class="lightbox">
-      <a href="#" class="close">&times;</a>
-      <img src="{{ url_for('static', filename='images/family6.jpg') }}" alt="Memory 6 Zoom">
-    </div>
+        <!-- Delete Button -->
+        <form action="{{ url_for('delete_memory', index=loop.index0) }}" method="POST" style="margin-top:5px; text-align:center;">
+          <button type="submit">Delete</button>
+        </form>
+      </div>
 
-  </main>
+      <!-- Lightbox -->
+      <div id="memory{{ loop.index }}" class="lightbox">
+        <a href="#" class="close">&times;</a>
+        <img src="{{ url_for('static', filename='images/' ~ memory.file) }}">
+      </div>
+    {% endfor %}
+  </div>
 
+</main>
 </body>
 </html>

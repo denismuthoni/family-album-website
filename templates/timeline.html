@@ -3,35 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Family timeline</title>
+  <title>Family Timeline</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-  <input type="checkbox" id="theme-toggle" hidden>
-  <label for="theme-toggle" class="theme-switch">🌗 Toggle Theme</label>
+<nav>
+  <a href="/">Home</a>
+  <a href="/memories">Memories</a>
+  <a href="/stories">Stories</a>
+  <a href="/timeline">Timeline</a>
+</nav>
 
-  <nav>
-    <a href="/">Home</a>
-    <a href="/memories">Memories</a>
-    <a href="/stories">Stories</a>
-    <a href="/timeline">timeline</a>
-  </nav>
+<main class="fade-in">
+  <h2>📅 Family Timeline</h2>
 
-  <main class="fade-in">
-    <h2>📅 Family Timeline</h2>
+  <!-- Timeline Upload Form -->
+  <form action="{{ url_for('timeline_page') }}" method="POST" enctype="multipart/form-data" class="timeline-form">
+    <input type="date" name="date" required>
+    <input type="text" name="title" placeholder="Event Title" required>
+    <textarea name="story" placeholder="Write the story..." required></textarea>
+    <input type="file" name="photo" accept="image/*">
+    <button type="submit">Add Timeline Event</button>
+  </form>
 
-    <div class="timeline">
-      {% for entry in stories %}
+  <div class="timeline">
+    {% for event in timeline_events %}
       <div class="timeline-entry">
-        <h4>{{ entry.date }} — {{ entry.name }}</h4>
-        <p>{{ entry.story }}</p>
-        {% if entry.image %}
-          <img src="{{ url_for('static', filename='images/' + entry.image) }}" alt="{{ entry.name }}" style="max-width: 300px; margin-top: 10px; border-radius: 10px;">
+        <h3>{{ event.date }} — {{ event.title }}</h3>
+        <p>{{ event.story }}</p>
+
+        {% if event.image %}
+          <img src="{{ url_for('static', filename='images/' + event.image) }}"
+               alt="{{ event.title }}"
+               style="max-width: 300px; border-radius: 10px; margin-top: 10px;">
         {% endif %}
+
+        <!-- Delete Button -->
+        <form action="{{ url_for('delete_timeline', index=loop.index0) }}" method="POST" style="margin-top:5px;">
+          <button type="submit">Delete</button>
+        </form>
       </div>
-      {% endfor %}
-    </div>
-  </main>
+    {% endfor %}
+  </div>
+
+</main>
 </body>
 </html>
