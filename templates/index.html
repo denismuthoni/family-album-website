@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Family Album</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#0077cc">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="apple-touch-icon" href="/static/images/icon-192.png">
 
   <!-- ✅ Font Awesome for icons (reliable CDN) -->
   <link
@@ -146,5 +150,16 @@
   </a>
 </div>
   </footer>
+
+  <!-- Service Worker for PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js')
+          .then(registration => console.log('SW registered'))
+          .catch(error => console.log('SW registration failed'));
+      });
+    }
+  </script>
 </body>
 </html>

@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for
 import os
 import json
 from werkzeug.utils import secure_filename
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 app = Flask(__name__)
 
@@ -9,6 +12,13 @@ app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join('static', 'images')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Cloudinary config
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'your_cloud_name'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY', 'your_api_key'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET', 'your_api_secret')
+)
 
 # ---------------- JSON Helper Functions ---------------- #
 def load_data(filename):
@@ -44,9 +54,10 @@ def memories_page():
         file = request.files["photo"]
         caption = request.form["caption"]
         if file:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            memories.append({"file": filename, "caption": caption})
+            # Upload to Cloudinary
+            result = cloudinary.uploader.upload(file)
+            image_url = result['secure_url']
+            memories.append({"file": image_url, "caption": caption})
             save_data(memories_file, memories)  # Save permanently
         return redirect(url_for("memories_page"))
     return render_template("memories.html", memories=memories)
@@ -58,9 +69,10 @@ def stories_page():
         file = request.files["photo"]
         caption = request.form["caption"]
         if file:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            stories.append({"file": filename, "caption": caption})
+            # Upload to Cloudinary
+            result = cloudinary.uploader.upload(file)
+            image_url = result['secure_url']
+            stories.append({"file": image_url, "caption": caption})
             save_data(stories_file, stories)  # Save permanently
         return redirect(url_for("stories_page"))
     return render_template("stories.html", stories=stories)
@@ -73,15 +85,16 @@ def timeline_page():
         title = request.form["title"]
         story = request.form["story"]
         file = request.files["photo"]
-        filename = None
+        image_url = None
         if file:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # Upload to Cloudinary
+            result = cloudinary.uploader.upload(file)
+            image_url = result['secure_url']
         timeline_events.append({
             "date": date,
             "title": title,
             "story": story,
-            "image": filename
+            "image": image_url
         })
         timeline_events.sort(key=lambda x: x["date"], reverse=True)
         save_data(timeline_file, timeline_events)  # Save permanently
@@ -94,10 +107,7 @@ def delete_memory(index):
     if 0 <= index < len(memories):
         memory = memories.pop(index)
         save_data(memories_file, memories)
-        try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], memory["file"]))
-        except:
-            pass
+        # Note: Cloudinary images persist, no need to delete
     return redirect(url_for("memories_page"))
 
 @app.route("/stories/delete/<int:index>", methods=["POST"])
@@ -105,10 +115,7 @@ def delete_story(index):
     if 0 <= index < len(stories):
         story = stories.pop(index)
         save_data(stories_file, stories)
-        try:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], story["file"]))
-        except:
-            pass
+        # Note: Cloudinary images persist, no need to delete
     return redirect(url_for("stories_page"))
 
 @app.route("/timeline/delete/<int:index>", methods=["POST"])
@@ -116,11 +123,7 @@ def delete_timeline(index):
     if 0 <= index < len(timeline_events):
         event = timeline_events.pop(index)
         save_data(timeline_file, timeline_events)
-        if event.get("image"):
-            try:
-                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], event["image"]))
-            except:
-                pass
+        # Note: Cloudinary images persist, no need to delete
     return redirect(url_for("timeline_page"))
 
 # ---------------- Run App ---------------- #

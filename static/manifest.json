@@ -1,0 +1,21 @@
+{
+  "name": "Family Album Website",
+  "short_name": "Family Album",
+  "description": "A beautiful family album website to share memories, stories, and timeline",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#0077cc",
+  "icons": [
+    {
+      "src": "/static/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -251,18 +251,77 @@ button:hover, .btn:hover {
   to   { opacity: 1; }
 }
 
-/* Responsive */
+/* Responsive Design */
 @media (max-width: 768px) {
   nav {
     flex-direction: column;
+    padding: 15px;
+  }
+
+  nav a {
+    margin: 5px 0;
+  }
+
+  .hero {
+    padding: 20px 15px;
+  }
+
+  .hero h1 {
+    font-size: 2em;
+  }
+
+  .hero p {
+    font-size: 1em;
+  }
+
+  .gallery {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .photo-card img {
+    height: 180px;
+  }
+
+  .timeline {
+    padding: 20px 15px;
+  }
+
+  .timeline-entry {
+    padding: 12px;
+  }
+
+  form {
+    padding: 15px;
+  }
+
+  .lightbox img {
+    max-width: 90%;
+    max-height: 80%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 1.8em;
   }
 
   .gallery {
     grid-template-columns: 1fr;
   }
 
-  .hero h1 {
-    font-size: 2em;
+  .photo-card img {
+    height: 200px;
+  }
+
+  nav a {
+    font-size: 0.9em;
+  }
+
+  .timeline-entry {
+    margin: 15px 0;
+    padding: 10px;
   }
 }
 /* Gallery Grid */
