@@ -21,11 +21,18 @@ HAS_CLOUDINARY = all([
 ])
 
 if HAS_CLOUDINARY:
-    cloudinary.config(
-        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
-        api_key=os.environ.get('CLOUDINARY_API_KEY'),
-        api_secret=os.environ.get('CLOUDINARY_API_SECRET')
-    )
+    try:
+        cloudinary.config(
+            cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+            api_key=os.environ.get('CLOUDINARY_API_KEY'),
+            api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+        )
+        print("Cloudinary configured successfully")
+    except Exception as e:
+        print(f"Cloudinary configuration error: {e}")
+        HAS_CLOUDINARY = False
+else:
+    print("Cloudinary credentials not found - using local storage")
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -48,6 +55,8 @@ def upload_image(file):
     
     # Fallback to local storage
     try:
+        # Reset file pointer to the beginning
+        file.seek(0)
         filename = secure_filename(file.filename)
         # Add timestamp to avoid filename conflicts
         import time
@@ -92,15 +101,27 @@ def memories_page():
     if request.method == "POST":
         try:
             file = request.files.get("photo")
-            caption = request.form.get("caption", "")
+            caption = request.form.get("caption", "").strip()
             
-            if file and caption:
-                image_url = upload_image(file)
-                if image_url:
-                    memories.append({"file": image_url, "caption": caption})
-                    save_data(memories_file, memories)
+            if not file:
+                print("No file provided")
+                return redirect(url_for("memories_page"))
+            
+            if not caption:
+                print("No caption provided")
+                return redirect(url_for("memories_page"))
+            
+            image_url = upload_image(file)
+            if image_url:
+                memories.append({"file": image_url, "caption": caption})
+                save_data(memories_file, memories)
+                print(f"Memory added successfully: {caption}")
+            else:
+                print("Image upload returned None")
         except Exception as e:
-            print(f"Error in memories_page: {e}")
+            print(f"Error in memories_page: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
         return redirect(url_for("memories_page"))
     return render_template("memories.html", memories=memories)
 
@@ -110,15 +131,27 @@ def stories_page():
     if request.method == "POST":
         try:
             file = request.files.get("photo")
-            caption = request.form.get("caption", "")
+            caption = request.form.get("caption", "").strip()
             
-            if file and caption:
-                image_url = upload_image(file)
-                if image_url:
-                    stories.append({"file": image_url, "caption": caption})
-                    save_data(stories_file, stories)
+            if not file:
+                print("No file provided")
+                return redirect(url_for("stories_page"))
+            
+            if not caption:
+                print("No caption provided")
+                return redirect(url_for("stories_page"))
+            
+            image_url = upload_image(file)
+            if image_url:
+                stories.append({"file": image_url, "caption": caption})
+                save_data(stories_file, stories)
+                print(f"Story added successfully: {caption}")
+            else:
+                print("Image upload returned None")
         except Exception as e:
-            print(f"Error in stories_page: {e}")
+            print(f"Error in stories_page: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
         return redirect(url_for("stories_page"))
     return render_template("stories.html", stories=stories)
 
@@ -127,26 +160,32 @@ def stories_page():
 def timeline_page():
     if request.method == "POST":
         try:
-            date = request.form.get("date", "")
-            title = request.form.get("title", "")
-            story = request.form.get("story", "")
+            date = request.form.get("date", "").strip()
+            title = request.form.get("title", "").strip()
+            story = request.form.get("story", "").strip()
             file = request.files.get("photo")
+            
+            if not all([date, title, story]):
+                print("Missing required fields")
+                return redirect(url_for("timeline_page"))
             
             image_url = None
             if file:
                 image_url = upload_image(file)
             
-            if date and title and story:
-                timeline_events.append({
-                    "date": date,
-                    "title": title,
-                    "story": story,
-                    "image": image_url
-                })
-                timeline_events.sort(key=lambda x: x["date"], reverse=True)
-                save_data(timeline_file, timeline_events)
+            timeline_events.append({
+                "date": date,
+                "title": title,
+                "story": story,
+                "image": image_url
+            })
+            timeline_events.sort(key=lambda x: x["date"], reverse=True)
+            save_data(timeline_file, timeline_events)
+            print(f"Timeline event added successfully: {title}")
         except Exception as e:
-            print(f"Error in timeline_page: {e}")
+            print(f"Error in timeline_page: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
         return redirect(url_for("timeline_page"))
     return render_template("timeline.html", timeline_events=timeline_events)
 
@@ -176,6 +215,17 @@ def delete_timeline(index):
     return redirect(url_for("timeline_page"))
 
 # ---------------- Run App ---------------- #
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"Internal Server Error: {error}")
+    import traceback
+    traceback.print_exc()
+    return "Internal Server Error - Check server logs for details", 500
+
+@app.errorhandler(404)
+def not_found(error):
+    return redirect(url_for("home"))
+
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
