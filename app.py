@@ -14,11 +14,50 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Cloudinary config
-cloudinary.config(
-    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'your_cloud_name'),
-    api_key=os.environ.get('CLOUDINARY_API_KEY', 'your_api_key'),
-    api_secret=os.environ.get('CLOUDINARY_API_SECRET', 'your_api_secret')
-)
+HAS_CLOUDINARY = all([
+    os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    os.environ.get('CLOUDINARY_API_KEY'),
+    os.environ.get('CLOUDINARY_API_SECRET')
+])
+
+if HAS_CLOUDINARY:
+    cloudinary.config(
+        cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        api_key=os.environ.get('CLOUDINARY_API_KEY'),
+        api_secret=os.environ.get('CLOUDINARY_API_SECRET')
+    )
+
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_image(file):
+    """Upload image to Cloudinary if configured, otherwise save locally"""
+    if not file or not allowed_file(file.filename):
+        return None
+    
+    try:
+        if HAS_CLOUDINARY:
+            # Try Cloudinary first
+            result = cloudinary.uploader.upload(file)
+            return result['secure_url']
+    except Exception as e:
+        print(f"Cloudinary upload failed: {e}")
+    
+    # Fallback to local storage
+    try:
+        filename = secure_filename(file.filename)
+        # Add timestamp to avoid filename conflicts
+        import time
+        filename = f"{int(time.time())}_{filename}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        return f"/static/images/{filename}"
+    except Exception as e:
+        print(f"Local upload failed: {e}")
+        return None
 
 # ---------------- JSON Helper Functions ---------------- #
 def load_data(filename):
@@ -51,14 +90,17 @@ def home():
 @app.route("/memories", methods=["GET", "POST"])
 def memories_page():
     if request.method == "POST":
-        file = request.files["photo"]
-        caption = request.form["caption"]
-        if file:
-            # Upload to Cloudinary
-            result = cloudinary.uploader.upload(file)
-            image_url = result['secure_url']
-            memories.append({"file": image_url, "caption": caption})
-            save_data(memories_file, memories)  # Save permanently
+        try:
+            file = request.files.get("photo")
+            caption = request.form.get("caption", "")
+            
+            if file and caption:
+                image_url = upload_image(file)
+                if image_url:
+                    memories.append({"file": image_url, "caption": caption})
+                    save_data(memories_file, memories)
+        except Exception as e:
+            print(f"Error in memories_page: {e}")
         return redirect(url_for("memories_page"))
     return render_template("memories.html", memories=memories)
 
@@ -66,14 +108,17 @@ def memories_page():
 @app.route("/stories", methods=["GET", "POST"])
 def stories_page():
     if request.method == "POST":
-        file = request.files["photo"]
-        caption = request.form["caption"]
-        if file:
-            # Upload to Cloudinary
-            result = cloudinary.uploader.upload(file)
-            image_url = result['secure_url']
-            stories.append({"file": image_url, "caption": caption})
-            save_data(stories_file, stories)  # Save permanently
+        try:
+            file = request.files.get("photo")
+            caption = request.form.get("caption", "")
+            
+            if file and caption:
+                image_url = upload_image(file)
+                if image_url:
+                    stories.append({"file": image_url, "caption": caption})
+                    save_data(stories_file, stories)
+        except Exception as e:
+            print(f"Error in stories_page: {e}")
         return redirect(url_for("stories_page"))
     return render_template("stories.html", stories=stories)
 
@@ -81,23 +126,27 @@ def stories_page():
 @app.route("/timeline", methods=["GET", "POST"])
 def timeline_page():
     if request.method == "POST":
-        date = request.form["date"]
-        title = request.form["title"]
-        story = request.form["story"]
-        file = request.files["photo"]
-        image_url = None
-        if file:
-            # Upload to Cloudinary
-            result = cloudinary.uploader.upload(file)
-            image_url = result['secure_url']
-        timeline_events.append({
-            "date": date,
-            "title": title,
-            "story": story,
-            "image": image_url
-        })
-        timeline_events.sort(key=lambda x: x["date"], reverse=True)
-        save_data(timeline_file, timeline_events)  # Save permanently
+        try:
+            date = request.form.get("date", "")
+            title = request.form.get("title", "")
+            story = request.form.get("story", "")
+            file = request.files.get("photo")
+            
+            image_url = None
+            if file:
+                image_url = upload_image(file)
+            
+            if date and title and story:
+                timeline_events.append({
+                    "date": date,
+                    "title": title,
+                    "story": story,
+                    "image": image_url
+                })
+                timeline_events.sort(key=lambda x: x["date"], reverse=True)
+                save_data(timeline_file, timeline_events)
+        except Exception as e:
+            print(f"Error in timeline_page: {e}")
         return redirect(url_for("timeline_page"))
     return render_template("timeline.html", timeline_events=timeline_events)
 
