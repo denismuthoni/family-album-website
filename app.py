@@ -5,8 +5,39 @@ from werkzeug.utils import secure_filename
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import re
 
 app = Flask(__name__)
+
+# Security Configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'family-album-secret-key-change-in-production')
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600
+
+# Initialize CSRF Protection
+csrf = CSRFProtect(app)
+
+# Initialize Rate Limiter
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+# Secure Headers
+@app.after_request
+def set_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = "default-src 'self' https: data:; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; img-src 'self' https: data:;"
+    return response
 
 # ---------------- Config ---------------- #
 UPLOAD_FOLDER = os.path.join('static', 'images')
@@ -36,13 +67,46 @@ else:
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def sanitize_input(text):
+    """Remove potentially dangerous characters from user input"""
+    # Remove HTML tags
+    text = re.sub(r'<[^>]+>', '', text)
+    # Remove extra whitespace
+    text = ' '.join(text.split())
+    # Limit length
+    return text[:500]
+
+def validate_caption(caption):
+    """Validate and sanitize caption"""
+    if not caption or len(caption.strip()) == 0:
+        return None
+    sanitized = sanitize_input(caption)
+    if len(sanitized) < 2:
+        return None
+    return sanitized
+
 def upload_image(file):
     """Upload image to Cloudinary if configured, otherwise save locally"""
     if not file or not allowed_file(file.filename):
+        print("Invalid file type")
+        return None
+    
+    # Check file size
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)
+    
+    if file_size > MAX_FILE_SIZE:
+        print(f"File too large: {file_size} bytes (max: {MAX_FILE_SIZE})")
+        return None
+    
+    if file_size == 0:
+        print("Empty file")
         return None
     
     try:
@@ -97,6 +161,7 @@ def home():
 
 # Memories page
 @app.route("/memories", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def memories_page():
     if request.method == "POST":
         try:
@@ -107,15 +172,16 @@ def memories_page():
                 print("No file provided")
                 return redirect(url_for("memories_page"))
             
-            if not caption:
-                print("No caption provided")
+            validated_caption = validate_caption(caption)
+            if not validated_caption:
+                print("Invalid caption")
                 return redirect(url_for("memories_page"))
             
             image_url = upload_image(file)
             if image_url:
-                memories.append({"file": image_url, "caption": caption})
+                memories.append({"file": image_url, "caption": validated_caption})
                 save_data(memories_file, memories)
-                print(f"Memory added successfully: {caption}")
+                print(f"Memory added successfully: {validated_caption}")
             else:
                 print("Image upload returned None")
         except Exception as e:
@@ -127,6 +193,7 @@ def memories_page():
 
 # Stories page
 @app.route("/stories", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def stories_page():
     if request.method == "POST":
         try:
@@ -137,15 +204,16 @@ def stories_page():
                 print("No file provided")
                 return redirect(url_for("stories_page"))
             
-            if not caption:
-                print("No caption provided")
+            validated_caption = validate_caption(caption)
+            if not validated_caption:
+                print("Invalid caption")
                 return redirect(url_for("stories_page"))
             
             image_url = upload_image(file)
             if image_url:
-                stories.append({"file": image_url, "caption": caption})
+                stories.append({"file": image_url, "caption": validated_caption})
                 save_data(stories_file, stories)
-                print(f"Story added successfully: {caption}")
+                print(f"Story added successfully: {validated_caption}")
             else:
                 print("Image upload returned None")
         except Exception as e:
@@ -157,6 +225,7 @@ def stories_page():
 
 # Timeline page
 @app.route("/timeline", methods=["GET", "POST"])
+@limiter.limit("10 per minute")
 def timeline_page():
     if request.method == "POST":
         try:
@@ -165,8 +234,11 @@ def timeline_page():
             story = request.form.get("story", "").strip()
             file = request.files.get("photo")
             
-            if not all([date, title, story]):
-                print("Missing required fields")
+            validated_title = validate_caption(title)
+            validated_story = validate_caption(story)
+            
+            if not all([date, validated_title, validated_story]):
+                print("Missing or invalid required fields")
                 return redirect(url_for("timeline_page"))
             
             image_url = None
@@ -175,13 +247,13 @@ def timeline_page():
             
             timeline_events.append({
                 "date": date,
-                "title": title,
-                "story": story,
+                "title": validated_title,
+                "story": validated_story,
                 "image": image_url
             })
             timeline_events.sort(key=lambda x: x["date"], reverse=True)
             save_data(timeline_file, timeline_events)
-            print(f"Timeline event added successfully: {title}")
+            print(f"Timeline event added successfully: {validated_title}")
         except Exception as e:
             print(f"Error in timeline_page: {type(e).__name__}: {e}")
             import traceback
@@ -191,6 +263,7 @@ def timeline_page():
 
 # ---------------- Delete Routes ---------------- #
 @app.route("/memories/delete/<int:index>", methods=["POST"])
+@limiter.limit("30 per minute")
 def delete_memory(index):
     if 0 <= index < len(memories):
         memory = memories.pop(index)
@@ -199,6 +272,7 @@ def delete_memory(index):
     return redirect(url_for("memories_page"))
 
 @app.route("/stories/delete/<int:index>", methods=["POST"])
+@limiter.limit("30 per minute")
 def delete_story(index):
     if 0 <= index < len(stories):
         story = stories.pop(index)
@@ -207,6 +281,7 @@ def delete_story(index):
     return redirect(url_for("stories_page"))
 
 @app.route("/timeline/delete/<int:index>", methods=["POST"])
+@limiter.limit("30 per minute")
 def delete_timeline(index):
     if 0 <= index < len(timeline_events):
         event = timeline_events.pop(index)

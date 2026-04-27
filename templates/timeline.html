@@ -20,6 +20,8 @@
 
   <!-- Timeline Upload Form -->
   <form action="{{ url_for('timeline_page') }}" method="POST" enctype="multipart/form-data" class="timeline-form">
+    {{ csrf_token() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="date" name="date" required>
     <input type="text" name="title" placeholder="Event Title" required>
     <textarea name="story" placeholder="Write the story..." required></textarea>
@@ -51,6 +53,7 @@
 
         <!-- Delete Button -->
         <form action="{{ url_for('delete_timeline', index=loop.index0) }}" method="POST" style="margin-top:5px;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit">Delete</button>
         </form>
       </div>

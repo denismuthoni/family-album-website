@@ -21,6 +21,8 @@
   <!-- Upload Form -->
   <form action="{{ url_for('memories_page') }}" method="POST"
         enctype="multipart/form-data" style="text-align:center; margin:20px;">
+    {{ csrf_token() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="file" name="photo" accept="image/*" required>
     <input type="text" name="caption" placeholder="Write a caption..." required>
     <button type="submit">Add Memory</button>
@@ -42,6 +44,7 @@
 
         <!-- Delete Button -->
         <form action="{{ url_for('delete_memory', index=loop.index0) }}" method="POST" style="margin-top:5px; text-align:center;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button type="submit">Delete</button>
         </form>
       </div>
