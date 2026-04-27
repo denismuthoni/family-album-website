@@ -215,6 +215,8 @@ def delete_timeline(index):
     return redirect(url_for("timeline_page"))
 
 # ---------------- Run App ---------------- #
+
+
 @app.errorhandler(500)
 def internal_error(error):
     print(f"Internal Server Error: {error}")

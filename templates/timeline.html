@@ -38,8 +38,12 @@
             <img src="{{ event.image }}"
                  alt="{{ event.title }}"
                  style="max-width: 300px; border-radius: 10px; margin-top: 10px;">
+          {% elif event.image.startswith('/static') %}
+            <img src="{{ event.image }}"
+                 alt="{{ event.title }}"
+                 style="max-width: 300px; border-radius: 10px; margin-top: 10px;">
           {% else %}
-            <img src="{{ url_for('static', filename=event.image.replace('/static/', '')) }}"
+            <img src="{{ url_for('static', filename='images/' + event.image) }}"
                  alt="{{ event.title }}"
                  style="max-width: 300px; border-radius: 10px; margin-top: 10px;">
           {% endif %}

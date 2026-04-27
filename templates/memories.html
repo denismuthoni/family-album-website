@@ -32,8 +32,10 @@
         <a href="#memory{{ loop.index }}">
           {% if memory.file.startswith('http') %}
             <img src="{{ memory.file }}">
+          {% elif memory.file.startswith('/static') %}
+            <img src="{{ memory.file }}">
           {% else %}
-            <img src="{{ url_for('static', filename=memory.file.replace('/static/', '')) }}">
+            <img src="{{ url_for('static', filename='images/' + memory.file) }}">
           {% endif %}
         </a>
         <div class="photo-caption">{{ memory.caption }}</div>
@@ -49,8 +51,10 @@
         <a href="#" class="close">&times;</a>
         {% if memory.file.startswith('http') %}
           <img src="{{ memory.file }}">
+        {% elif memory.file.startswith('/static') %}
+          <img src="{{ memory.file }}">
         {% else %}
-          <img src="{{ url_for('static', filename=memory.file.replace('/static/', '')) }}">
+          <img src="{{ url_for('static', filename='images/' + memory.file) }}">
         {% endif %}
       </div>
     {% endfor %}

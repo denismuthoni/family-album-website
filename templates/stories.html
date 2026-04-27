@@ -32,8 +32,10 @@
         <a href="#story{{ loop.index }}">
           {% if story.file.startswith('http') %}
             <img src="{{ story.file }}">
+          {% elif story.file.startswith('/static') %}
+            <img src="{{ story.file }}">
           {% else %}
-            <img src="{{ url_for('static', filename=story.file.replace('/static/', '')) }}">
+            <img src="{{ url_for('static', filename='images/' + story.file) }}">
           {% endif %}
         </a>
         <div class="photo-caption">{{ story.caption }}</div>
@@ -49,8 +51,10 @@
         <a href="#" class="close">&times;</a>
         {% if story.file.startswith('http') %}
           <img src="{{ story.file }}">
+        {% elif story.file.startswith('/static') %}
+          <img src="{{ story.file }}">
         {% else %}
-          <img src="{{ url_for('static', filename=story.file.replace('/static/', '')) }}">
+          <img src="{{ url_for('static', filename='images/' + story.file) }}">
         {% endif %}
       </div>
     {% endfor %}
